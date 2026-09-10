@@ -231,7 +231,7 @@ staying clear does, so hovering at the boundary doesn't flicker. A grace period
 rides out dropped detections, and transitions crossfade.
 
 ```
-src/konsent/
+src/                 # installs as the `konsent` package
 ├── detector.py   landmarks → face size + head pose
 ├── focus.py      hysteresis state machine → 0..1 clarity
 ├── effects.py    downscaled Gaussian defocus

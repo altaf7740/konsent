@@ -36,11 +36,17 @@ konsent-setup = "konsent.doctor:main"
 dev = ["pytest>=8.0"]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/konsent"]
+# The sources live in src/ but install as the `konsent` package: a top-level
+# module literally named `src` would collide with every other project shipping
+# one, and `python -m src` is not a usable entry point. Setuptools is used
+# rather than hatchling because hatchling refuses editable installs when a
+# sources rewrite changes a prefix instead of stripping it.
+[tool.setuptools]
+package-dir = {"konsent" = "src"}
+packages = ["konsent", "konsent.sinks", "konsent.tray"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
