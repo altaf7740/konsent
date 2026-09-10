@@ -1,0 +1,34 @@
+# Copy to config.toml and edit. Every value is optional.
+# Run `python -m konsent --preview --hud` to watch these numbers live.
+
+camera_index = 0
+width = 1280
+height = 720
+fps = 30
+mirror = false
+
+# --- when you count as "focused" ---
+# Face height as a fraction of the frame. Raise to make yourself lean in more.
+face_ratio_enter = 0.30   # needed to become clear
+face_ratio_exit  = 0.24   # needed to stay clear (lower = less flicker)
+
+# Head rotation away from neutral, in degrees.
+yaw_enter = 16.0
+yaw_exit  = 26.0
+pitch_enter = 16.0
+pitch_exit  = 26.0
+
+# Set these with `python -m konsent --calibrate`, not by hand.
+yaw_offset = 0.0
+pitch_offset = 0.0
+
+# Seconds the face may go missing before blurring (rides out detector dropouts).
+grace_seconds = 0.4
+
+# --- look ---
+fade_seconds = 0.35    # crossfade time between blurred and clear
+blur_strength = 0.06   # max blur radius as a fraction of frame width
+
+# --- overrides ---
+hotkey_clear = "<ctrl>+<alt>+c"
+hotkey_blur  = "<ctrl>+<alt>+b"
