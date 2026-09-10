@@ -272,3 +272,7 @@ trips a dispatch assertion under an AppKit run loop. The tray menu replaces them
 produced three surprises (a MediaPipe Metal crash, `CAP_AVFOUNDATION` opening the
 camera but reading nothing, and the pynput assertion), so expect the other two to
 have their own.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
