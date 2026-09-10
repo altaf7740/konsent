@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -195,21 +196,22 @@ def test_calibration_rewrites_offsets_without_losing_other_settings(tmp_path):
     assert (cfg.camera_index, cfg.fps) == (3, 24)
 
 
-# --- autostart --------------------------------------------------------------
+# --- autostart, all platforms ----------------------------------------------
 
-def test_login_plist_is_valid_and_runs_at_load():
+def test_macos_plist_is_valid_and_runs_at_load():
     import plistlib
     from pathlib import Path
     from konsent import autostart
 
-    data = plistlib.loads(autostart.build_plist(Path("/opt/konsent/bin/konsent-app")).encode())
+    data = plistlib.loads(
+        autostart.build_plist(Path("/opt/konsent/bin/konsent-app")).encode()
+    )
     assert data["Label"] == autostart.LABEL
     assert data["RunAtLoad"] is True
     assert data["ProgramArguments"] == ["/opt/konsent/bin/konsent-app"]
 
 
-def test_login_plist_falls_back_to_module_invocation():
-    """If the console script is missing we must still name something runnable."""
+def test_macos_plist_falls_back_to_module_invocation():
     import plistlib
     from pathlib import Path
     from konsent import autostart
@@ -218,8 +220,92 @@ def test_login_plist_falls_back_to_module_invocation():
     assert data["ProgramArguments"] == ["/usr/bin/python3", "-m", "konsent.app"]
 
 
-def test_config_path_is_absolute():
-    """launchd starts us in '/', so a relative path would lose the calibration."""
-    from konsent.config import user_config_path
+def test_linux_desktop_entry_has_the_required_keys():
+    from konsent.autostart import build_desktop_entry
 
-    assert user_config_path().is_absolute()
+    text = build_desktop_entry(["/opt/konsent/bin/konsent-app"])
+    assert text.startswith("[Desktop Entry]")
+    keys = dict(
+        line.split("=", 1) for line in text.splitlines() if "=" in line
+    )
+    assert keys["Type"] == "Application"
+    assert keys["Terminal"] == "false"   # must not open a terminal at login
+    assert keys["Exec"] == "/opt/konsent/bin/konsent-app"
+
+
+def test_linux_desktop_entry_quotes_paths_with_spaces():
+    from konsent.autostart import build_desktop_entry
+
+    text = build_desktop_entry(["/home/a b/konsent-app", "-m", "konsent.app"])
+    exec_line = next(l for l in text.splitlines() if l.startswith("Exec="))
+    assert exec_line == 'Exec="/home/a b/konsent-app" -m konsent.app'
+
+
+def test_launch_command_is_absolute():
+    """Login shells have a minimal PATH, so the command cannot rely on it."""
+    import os
+    from konsent.autostart import launch_command
+
+    assert os.path.isabs(launch_command()[0])
+
+
+# --- tray -------------------------------------------------------------------
+
+def test_icon_states_are_visually_distinct():
+    from konsent.tray.icons import make_icon
+
+    filled, ring, faint = (
+        sum(1 for p in make_icon(s).get_flattened_data() if p[3] > 0)
+        for s in ("clear", "blurred", "off")
+    )
+    assert filled > ring > 0
+    assert faint > 0
+
+
+def test_every_state_has_a_glyph_and_an_icon():
+    from konsent.tray.icons import GLYPH, make_icon
+
+    for state in ("off", "blurred", "clear"):
+        assert GLYPH[state]
+        assert make_icon(state).size == (64, 64)
+
+
+# --- controller -------------------------------------------------------------
+
+def test_controller_starts_stopped():
+    from konsent.controller import Controller
+
+    c = Controller(config_path=Path("/nonexistent/config.toml"))
+    assert c.running is False
+    assert c.state_name() == "off"
+    assert c.status_text() == "Stopped"
+
+
+def test_controller_reports_clear_and_blurred():
+    from konsent.controller import Controller
+
+    c = Controller(config_path=Path("/nonexistent/config.toml"))
+    c.running = True
+    c.engaged = True
+    assert c.state_name() == "clear"
+    c.engaged = False
+    assert c.state_name() == "blurred"
+
+
+def test_controller_mode_survives_a_restart():
+    """Stopping and starting must not silently drop a forced override."""
+    from konsent.controller import Controller
+
+    c = Controller(config_path=Path("/nonexistent/config.toml"))
+    c.set_mode(Mode.FORCE_BLUR)
+    c.stop()
+    assert c.mode is Mode.FORCE_BLUR
+
+
+def test_controller_hands_back_an_error_only_once():
+    from konsent.controller import Controller
+
+    c = Controller(config_path=Path("/nonexistent/config.toml"))
+    c.error = "no camera"
+    assert c.take_error() == "no camera"
+    assert c.take_error() is None

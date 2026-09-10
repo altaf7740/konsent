@@ -8,10 +8,10 @@ help:  ## Show this help
 install:  ## Create the venv and install everything
 	uv sync
 
-app:  ## Launch the menu bar app (macOS)
+app:  ## Launch the tray app (menu bar on macOS)
 	uv run konsent-app
 
-login:  ## Start the menu bar app automatically at login
+login:  ## Start the tray app automatically at login
 	uv run python -c 'from konsent.autostart import enable; print("enabled:", enable())'
 
 login-off:  ## Stop starting at login

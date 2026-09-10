@@ -5,7 +5,8 @@ A virtual camera that keeps you **blurred until you lean in and look at it**.
 Point Google Meet, Zoom, or Teams at `konsent` instead of your webcam. Face close
 and facing the lens → sharp. Sit back, turn away, or leave → heavy blur.
 
-Works on macOS, Linux and Windows.
+Works on macOS, Linux and Windows — though only macOS has been tested on real
+hardware. See [Platform support](#platform-support).
 
 ## Install
 
@@ -28,7 +29,7 @@ sudo modprobe v4l2loopback devices=1 video_nr=10 card_label='konsent' exclusive_
 
 ## Use
 
-Menu bar app (macOS):
+Tray app — menu bar on macOS, system tray on Linux and Windows:
 
 ```bash
 make app     # ● clear · ○ blurred · ◌ stopped
@@ -36,6 +37,8 @@ make login   # start it automatically at login  (make login-off to undo)
 ```
 
 The menu has Start/Stop, the three modes, Calibrate and Edit settings.
+`make login` installs a LaunchAgent on macOS, an XDG autostart entry on Linux,
+and an HKCU Run key on Windows.
 
 Or from the terminal, anywhere:
 
@@ -97,8 +100,9 @@ src/konsent/
 ├── effects.py    downscaled Gaussian defocus
 ├── calibrate.py  measures your neutral pose
 ├── pipeline.py   capture → detect → obscure → publish
-├── app.py        menu bar front end (macOS)
-├── autostart.py  LaunchAgent for starting at login
+├── controller.py capture thread + state, shared by every front end
+├── tray/         menu bar (rumps) on macOS, system tray (pystray) elsewhere
+├── autostart.py  LaunchAgent / XDG autostart / Run key
 └── sinks/base.py ← swap point for native drivers
 ```
 
@@ -109,3 +113,25 @@ DirectShow filter, or a direct `v4l2loopback` writer means implementing one clas
 > **Dependency versions are interlocked** — see the comment in `pyproject.toml`
 > before bumping. MediaPipe 1.0.x crashes on macOS arm64; 0.10.x pins `numpy<2`,
 > which rules out OpenCV 5.x.
+
+## Platform support
+
+Everything is written cross-platform, but only macOS has been run end to end.
+
+| | macOS | Linux | Windows |
+|---|---|---|---|
+| Detection, blur, focus logic | tested | portable | portable |
+| Camera capture | tested | untested | untested |
+| Virtual camera | tested | untested | untested |
+| Tray app | tested | untested | untested |
+| Start at login | tested | untested | untested |
+| Global hotkeys | disabled¹ | untested² | untested |
+
+¹ pynput's macOS backend calls Text Input Source APIs off the main queue, which
+trips a dispatch assertion under an AppKit run loop. The tray menu replaces them.
+² Likely needs X11; Wayland restricts global key capture.
+
+"Portable" means written for it with no known blocker — not verified. macOS alone
+produced three surprises (a MediaPipe Metal crash, `CAP_AVFOUNDATION` opening the
+camera but reading nothing, and the pynput assertion), so expect the other two to
+have their own.

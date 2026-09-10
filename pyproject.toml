@@ -19,6 +19,9 @@ dependencies = [
     "opencv-python==4.10.0.84",
     "pyvirtualcam==0.15.0",
     "pynput==1.8.2",
+    # Tray icon on Linux/Windows; also used to render the icon art everywhere.
+    "pystray>=0.19.5",
+    "pillow>=10.0",
     # Menu bar app is macOS-only; the CLI works everywhere.
     "rumps==0.4.0 ; sys_platform == 'darwin'",
     "pyobjc-framework-avfoundation>=10.0 ; sys_platform == 'darwin'",
