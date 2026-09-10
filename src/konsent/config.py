@@ -1,9 +1,26 @@
 """Tunable settings, optionally overridden by a TOML file."""
 from __future__ import annotations
 
+import os
+import sys
 import tomllib
 from dataclasses import dataclass, fields
 from pathlib import Path
+
+
+def user_config_path() -> Path:
+    """One canonical location, so a login-launched app and the CLI agree.
+
+    A relative path would resolve against the working directory, which is "/"
+    when launchd starts us — silently losing the calibration offsets.
+    """
+    if sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support"
+    elif os.name == "nt":
+        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+    else:
+        base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    return base / "konsent" / "config.toml"
 
 
 @dataclass

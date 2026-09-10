@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import platform
 import sys
+import threading
 import time
+from typing import Callable
 
 import cv2
 import numpy as np
@@ -71,7 +73,18 @@ def _draw_hud(
         cv2.putText(frame, text, origin, cv2.FONT_HERSHEY_SIMPLEX, 0.6, colour, 1)
 
 
-def run(cfg: Config, preview: bool = False, hud: bool = False) -> int:
+def run(
+    cfg: Config,
+    preview: bool = False,
+    hud: bool = False,
+    tracker: FocusTracker | None = None,
+    stop_event: "threading.Event | None" = None,
+    on_tick: "Callable[[FocusTracker, FaceSignal, float], None] | None" = None,
+    quiet: bool = False,
+    hotkeys: bool = True,
+) -> int:
+    """Run until stopped. `tracker`, `stop_event` and `on_tick` let a GUI drive
+    and observe the loop; the CLI leaves them unset."""
     cap = open_camera(cfg)
     ok, frame = cap.read()
     if not ok:
@@ -80,24 +93,28 @@ def run(cfg: Config, preview: bool = False, hud: bool = False) -> int:
     height, width = frame.shape[:2]
 
     detector = FaceDetector()
-    tracker = FocusTracker(cfg)
-    listener = hotkey.start(cfg, tracker)
+    tracker = tracker or FocusTracker(cfg)
+    # pynput's macOS backend calls Text Input Source APIs from its listener
+    # thread, which assert they are on the main queue and SIGTRAP under an
+    # AppKit run loop. The menu bar app uses menu items instead.
+    listener = hotkey.start(cfg, tracker) if hotkeys else None
 
     sink: FrameSink = (
         PreviewSink() if preview else VirtualCameraSink(width, height, cfg.fps)
     )
-    print(f"[konsent] {width}x{height} -> {sink.name}")
-    print(
-        f"[konsent] hold {cfg.hotkey_clear} for clear, {cfg.hotkey_blur} for blur"
-        if listener
-        else "[konsent] running without hotkeys"
-    )
+    if not quiet:
+        print(f"[konsent] {width}x{height} -> {sink.name}")
+        print(
+            f"[konsent] hold {cfg.hotkey_clear} for clear, {cfg.hotkey_blur} for blur"
+            if listener
+            else "[konsent] running without hotkeys"
+        )
 
     prev = time.monotonic()
     smoothed_fps = float(cfg.fps)
     try:
         with sink:
-            while True:
+            while not (stop_event is not None and stop_event.is_set()):
                 ok, frame = cap.read()
                 if not ok:
                     print("[konsent] camera stopped delivering frames.", file=sys.stderr)
@@ -118,6 +135,8 @@ def run(cfg: Config, preview: bool = False, hud: bool = False) -> int:
                     _draw_hud(out, signal, tracker, smoothed_fps)
 
                 sink.send(out)
+                if on_tick is not None:
+                    on_tick(tracker, signal, smoothed_fps)
                 if sink.should_stop():
                     break
     except KeyboardInterrupt:

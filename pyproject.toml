@@ -19,10 +19,14 @@ dependencies = [
     "opencv-python==4.10.0.84",
     "pyvirtualcam==0.15.0",
     "pynput==1.8.2",
+    # Menu bar app is macOS-only; the CLI works everywhere.
+    "rumps==0.4.0 ; sys_platform == 'darwin'",
+    "pyobjc-framework-avfoundation>=10.0 ; sys_platform == 'darwin'",
 ]
 
 [project.scripts]
 konsent = "konsent.__main__:main"
+konsent-app = "konsent.app:main"
 
 [dependency-groups]
 dev = ["pytest>=8.0"]

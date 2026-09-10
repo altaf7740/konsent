@@ -453,7 +453,9 @@ dependencies = [
     { name = "numpy" },
     { name = "opencv-python" },
     { name = "pynput" },
+    { name = "pyobjc-framework-avfoundation", marker = "sys_platform == 'darwin'" },
     { name = "pyvirtualcam" },
+    { name = "rumps", marker = "sys_platform == 'darwin'" },
 ]
 
 [package.dev-dependencies]
@@ -467,7 +469,9 @@ requires-dist = [
     { name = "numpy", specifier = "==1.26.4" },
     { name = "opencv-python", specifier = "==4.10.0.84" },
     { name = "pynput", specifier = "==1.8.2" },
+    { name = "pyobjc-framework-avfoundation", marker = "sys_platform == 'darwin'", specifier = ">=10.0" },
     { name = "pyvirtualcam", specifier = "==0.15.0" },
+    { name = "rumps", marker = "sys_platform == 'darwin'", specifier = "==0.4.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -838,6 +842,24 @@ wheels = [
 ]
 
 [[package]]
+name = "pyobjc-framework-avfoundation"
+version = "12.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyobjc-core", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-coreaudio", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-coremedia", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-quartz", marker = "sys_platform == 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/19/48/917494d86ea02372e922bc96ffb76a6161f847db21ae7885fe7e0c3d7755/pyobjc_framework_avfoundation-12.2.2.tar.gz", hash = "sha256:5b9f33bf382af9a84b2394c98e3603a8abf03f29b0d2036e29698806ea22851a", size = 411684 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ea/0e/d8d75eef124963283756342ea6a6e5ef2c18329f00671c13cc8ff878fa93/pyobjc_framework_avfoundation-12.2.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b5feb1265d7a259f92e75c4bef791e047f2d4aa6b7faa3fd46077f135947adaf", size = 85548 },
+    { url = "https://files.pythonhosted.org/packages/97/4f/9d53f29d06f57de1398b56a0e535a3c9e85ca3ecb83607b83cafce318df6/pyobjc_framework_avfoundation-12.2.2-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:6a1baf030b9c7997b99e38450e84ea7398c8ca9e762660ba9019c20837e733a0", size = 85543 },
+    { url = "https://files.pythonhosted.org/packages/33/8b/ea58df10fcf060b0a8a3fb56cbc0b06722b62cab6ef013b0ef346735761b/pyobjc_framework_avfoundation-12.2.2-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:248fd714f7a63535577cde3a5bd097f1e309011586b799c110fb9bab27e88f55", size = 85590 },
+]
+
+[[package]]
 name = "pyobjc-framework-cocoa"
 version = "12.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -849,6 +871,36 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/e1/dd/aba439652cae293a736680ef5ed5cc29419adbbac1c6d4555b910741d516/pyobjc_framework_cocoa-12.2.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:5a751c8033a3b51f7996f0327e0675eb44dcfdfe7920fae01e3d78b662723fff", size = 387296 },
     { url = "https://files.pythonhosted.org/packages/f6/a7/370f12143661dff66f2c68a735938afab6530aa3b153f6a7a6f12b5eabab/pyobjc_framework_cocoa-12.2.2-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:851dca4c16e70b405e5cd5a8c166cf7c445ae54a4cdd95ce9a523803172f32d1", size = 387300 },
     { url = "https://files.pythonhosted.org/packages/fd/2f/b67e73d8bc367e03fe7861cd9c49fff9dcfa6db83bc0630c0adcfb25b7fa/pyobjc_framework_cocoa-12.2.2-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:e106f395531e67694376b0f1184612cbeea3ec8b9bf56b55ef41d026171d2a2d", size = 388117 },
+]
+
+[[package]]
+name = "pyobjc-framework-coreaudio"
+version = "12.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyobjc-core", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0e/71/bfbf1dffe9f08f31b444685e9d194e25cc3506db9f7a9d6ffdb56cc4408e/pyobjc_framework_coreaudio-12.2.2.tar.gz", hash = "sha256:880214f7328d6502a0c60ee744fa1eabe77a0d0c9ae276009453b69474eacf38", size = 79573 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4e/d3/6adf297241bb976ea85a087501915cccc758c2030fbb71612c611f2dbf23/pyobjc_framework_coreaudio-12.2.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:950e16f8c1cc21a76ca879d820b49795959fc6099eb8a41ccd1376951f42941e", size = 34986 },
+    { url = "https://files.pythonhosted.org/packages/10/75/556b8f887a8b68c3125aa64e8281c26cce42d5e7338b90ef5474d8a519b1/pyobjc_framework_coreaudio-12.2.2-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:2217911fb21cd6d8002d0895f6353a15fd6ce2c4e191b3f4cb6e16ad7a428591", size = 34980 },
+    { url = "https://files.pythonhosted.org/packages/f0/89/bd18309c59eaaf694253ca932844743d6429023b99260684181367ba0564/pyobjc_framework_coreaudio-12.2.2-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:7222c2b2317a6a350e08239b3b7ba7b4570b06ec8697b9bc53793bd6f85e3134", size = 35242 },
+]
+
+[[package]]
+name = "pyobjc-framework-coremedia"
+version = "12.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyobjc-core", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f0/12/0b3896ea04f0fbbe3f2cb37802cadce334f9aef204d911a81934013eba8c/pyobjc_framework_coremedia-12.2.2.tar.gz", hash = "sha256:fe9f972438674893e941e9db5b62f8ba99a33f94a7f1c2ce49b14416f154cd10", size = 98580 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9c/7a/de17f374501561a30f50a9c194bfaf39607c717cad062057ba16b209e79e/pyobjc_framework_coremedia-12.2.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:41142c919c557165df4a53ffe218e600ad0ccb7691bc9aed58a7839a88ba7c8b", size = 29520 },
+    { url = "https://files.pythonhosted.org/packages/38/18/5931478200f803db87be5cd6cb9af492d9ef2f2ac07cbfe019ecfa97db5a/pyobjc_framework_coremedia-12.2.2-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:f6f8150428e6ae40d6b97714f6933b8c4322f3fb94de9bfcb206d00cb021f464", size = 29518 },
+    { url = "https://files.pythonhosted.org/packages/cd/26/de907d6ead970916b39787e52bed679945328161f2abac533515b2ac8934/pyobjc_framework_coremedia-12.2.2-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:84f5deee8d366bf73069a0525509637aa578ccd0e6688923b09999a8bc3077a8", size = 29421 },
 ]
 
 [[package]]
@@ -957,6 +1009,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f6/68/11e6fac14130c6e1ce4f35ebaf9e16eaca1dcfbb9ecca434f71954ca0ff3/pyvirtualcam-0.15.0-cp312-cp312-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:eba1cb4ac8b4be0f7831e8c8f0cf720ab3ed3926d2a8ba211bcd0fd76b217921", size = 115884 },
     { url = "https://files.pythonhosted.org/packages/e4/7b/62f987f4c204d23e9e71b90997f9d9dca83dd05a7997001b11af9721d1a6/pyvirtualcam-0.15.0-cp312-cp312-win_amd64.whl", hash = "sha256:761f8d25e96d7987e0c383ac144bd5d314b9d4edee07e844f057dfb6c8ddb6da", size = 189615 },
 ]
+
+[[package]]
+name = "rumps"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b2/e2/2e6a47951290bd1a2831dcc50aec4b25d104c0cf00e8b7868cbd29cf3bfe/rumps-0.4.0.tar.gz", hash = "sha256:17fb33c21b54b1e25db0d71d1d793dc19dc3c0b7d8c79dc6d833d0cffc8b1596", size = 39257 }
 
 [[package]]
 name = "scipy"

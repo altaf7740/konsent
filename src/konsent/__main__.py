@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from .calibrate import calibrate
-from .config import Config
+from .config import Config, user_config_path
 from .pipeline import list_cameras, run
 
 
@@ -14,7 +14,7 @@ def main(argv: list[str] | None = None) -> int:
         prog="konsent",
         description="A virtual camera that stays blurred until you lean in.",
     )
-    p.add_argument("--config", type=Path, default=Path("config.toml"))
+    p.add_argument("--config", type=Path, default=None, help="settings file")
     p.add_argument("--camera", type=int, help="camera index")
     p.add_argument("--width", type=int)
     p.add_argument("--height", type=int)
@@ -39,7 +39,8 @@ def main(argv: list[str] | None = None) -> int:
         print("cameras:", ", ".join(map(str, found)) if found else "none found")
         return 0
 
-    cfg = Config.load(args.config)
+    config_path = args.config or user_config_path()
+    cfg = Config.load(config_path)
     for name, value in (
         ("camera_index", args.camera),
         ("width", args.width),
@@ -53,7 +54,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.calibrate:
-            return calibrate(cfg, args.config)
+            return calibrate(cfg, config_path)
         return run(cfg, preview=args.preview, hud=args.hud)
     except RuntimeError as exc:
         print(f"[konsent] {exc}", file=sys.stderr)

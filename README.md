@@ -28,6 +28,17 @@ sudo modprobe v4l2loopback devices=1 video_nr=10 card_label='konsent' exclusive_
 
 ## Use
 
+Menu bar app (macOS):
+
+```bash
+make app     # ● clear · ○ blurred · ◌ stopped
+make login   # start it automatically at login  (make login-off to undo)
+```
+
+The menu has Start/Stop, the three modes, Calibrate and Edit settings.
+
+Or from the terminal, anywhere:
+
 ```bash
 make calibrate   # once per camera setup — sit normally, look at the lens, 4s
 make run         # then pick "OBS Virtual Camera" in Meet
@@ -39,14 +50,19 @@ physically sits — a laptop lid is below eye level, so a straight-on face measu
 
 | Command | |
 |---|---|
-| `make run` | Start the virtual camera |
+| `make app` | Menu bar app (macOS) |
+| `make login` / `make login-off` | Start at login, on/off |
+| `make run` | Start the virtual camera in the terminal |
 | `make tune` | Preview window with live threshold readouts |
 | `make test` | Run the test suite |
 | `make cameras` | List available cameras |
 | `make clean` | Remove venv, caches and the downloaded model |
 
-<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> forces clear, <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> forces blur; press again for automatic.
-macOS needs Accessibility permission for the terminal; everything else still works without it.
+In terminal mode, <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> forces clear and <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> forces blur; press
+again for automatic. These need Accessibility permission on macOS, and everything
+else still works without it. The menu bar app uses its menu instead — pynput's
+listener calls Text Input Source APIs off the main queue, which trips an AppKit
+assertion under a run loop.
 
 ## Tuning
 
@@ -81,6 +97,8 @@ src/konsent/
 ├── effects.py    downscaled Gaussian defocus
 ├── calibrate.py  measures your neutral pose
 ├── pipeline.py   capture → detect → obscure → publish
+├── app.py        menu bar front end (macOS)
+├── autostart.py  LaunchAgent for starting at login
 └── sinks/base.py ← swap point for native drivers
 ```
 

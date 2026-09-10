@@ -193,3 +193,33 @@ def test_calibration_rewrites_offsets_without_losing_other_settings(tmp_path):
     cfg = Config.load(path)
     assert (cfg.yaw_offset, cfg.pitch_offset) == (1.0, 2.0)
     assert (cfg.camera_index, cfg.fps) == (3, 24)
+
+
+# --- autostart --------------------------------------------------------------
+
+def test_login_plist_is_valid_and_runs_at_load():
+    import plistlib
+    from pathlib import Path
+    from konsent import autostart
+
+    data = plistlib.loads(autostart.build_plist(Path("/opt/konsent/bin/konsent-app")).encode())
+    assert data["Label"] == autostart.LABEL
+    assert data["RunAtLoad"] is True
+    assert data["ProgramArguments"] == ["/opt/konsent/bin/konsent-app"]
+
+
+def test_login_plist_falls_back_to_module_invocation():
+    """If the console script is missing we must still name something runnable."""
+    import plistlib
+    from pathlib import Path
+    from konsent import autostart
+
+    data = plistlib.loads(autostart.build_plist(Path("/usr/bin/python3")).encode())
+    assert data["ProgramArguments"] == ["/usr/bin/python3", "-m", "konsent.app"]
+
+
+def test_config_path_is_absolute():
+    """launchd starts us in '/', so a relative path would lose the calibration."""
+    from konsent.config import user_config_path
+
+    assert user_config_path().is_absolute()
