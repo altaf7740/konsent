@@ -309,3 +309,60 @@ def test_controller_hands_back_an_error_only_once():
     c.error = "no camera"
     assert c.take_error() == "no camera"
     assert c.take_error() is None
+
+
+# --- setup doctor -----------------------------------------------------------
+
+def test_linux_package_commands_install_v4l2loopback():
+    from konsent.doctor import _LINUX_PACKAGES
+
+    assert _LINUX_PACKAGES  # every supported manager
+    for manager, cmd in _LINUX_PACKAGES.items():
+        assert cmd[0] == "sudo", manager
+        assert manager in cmd[1]
+        assert any("v4l2loopback" in part for part in cmd), manager
+
+
+def test_modprobe_sets_exclusive_caps():
+    """Without exclusive_caps=1 browsers refuse the loopback device."""
+    from konsent.doctor import _MODPROBE
+
+    assert "exclusive_caps=1" in _MODPROBE
+    assert "card_label=konsent" in _MODPROBE
+
+
+def test_windows_fix_uses_winget_obs_id():
+    from konsent.doctor import _windows_checks
+
+    fixes = [c.fix for c in _windows_checks() if c.fix]
+    for fix in fixes:
+        assert fix[0] == "winget"
+        assert "OBSProject.OBSStudio" in fix
+
+
+def test_check_mode_never_runs_a_fix(monkeypatch):
+    import konsent.doctor as doctor
+
+    ran = []
+    monkeypatch.setattr(doctor.subprocess, "run", lambda *a, **k: ran.append(a))
+    monkeypatch.setattr(
+        doctor, "collect",
+        lambda: [doctor.Check("Thing", False, "missing", fix=["rm", "-rf", "/"])],
+    )
+    doctor.main(["--check"])
+    assert ran == []
+
+
+def test_warnings_do_not_block_but_failures_do(monkeypatch):
+    import konsent.doctor as doctor
+
+    monkeypatch.setattr(
+        doctor, "collect",
+        lambda: [doctor.Check("Soft", False, "meh", warn_only=True)],
+    )
+    assert doctor.main(["--check"]) == 0
+
+    monkeypatch.setattr(
+        doctor, "collect", lambda: [doctor.Check("Hard", False, "nope")]
+    )
+    assert doctor.main(["--check"]) == 1

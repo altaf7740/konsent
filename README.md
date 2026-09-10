@@ -10,22 +10,21 @@ hardware. See [Platform support](#platform-support).
 
 ## Install
 
-Needs [uv](https://docs.astral.sh/uv/) and a virtual camera driver.
+Needs [uv](https://docs.astral.sh/uv/).
 
 ```bash
 make install
 ```
 
-**macOS / Windows** — install [OBS Studio](https://obsproject.com), open it once, and
-click **Start Virtual Camera**. On macOS also approve the extension in
+That installs the Python packages, downloads the face model, then detects your OS
+and offers to install the virtual camera driver — OBS via Homebrew on macOS or
+winget on Windows, `v4l2loopback` via apt/dnf/pacman/zypper on Linux. It asks
+before running anything that needs `sudo`, and prints the exact command first.
+Use `make check` to see what is missing without changing anything.
+
+One step it cannot do for you: on macOS, approving the camera extension in
 *System Settings → General → Login Items & Extensions → Camera Extensions*.
-
-**Linux**
-
-```bash
-sudo apt install v4l2loopback-dkms
-sudo modprobe v4l2loopback devices=1 video_nr=10 card_label='konsent' exclusive_caps=1
-```
+macOS requires a human for that. `make check` tells you when it is pending.
 
 ## Use
 
@@ -57,6 +56,7 @@ physically sits — a laptop lid is below eye level, so a straight-on face measu
 | `make login` / `make login-off` | Start at login, on/off |
 | `make run` | Start the virtual camera in the terminal |
 | `make tune` | Preview window with live threshold readouts |
+| `make check` | Report what is missing, install nothing |
 | `make test` | Run the test suite |
 | `make cameras` | List available cameras |
 | `make clean` | Remove venv, caches and the downloaded model |

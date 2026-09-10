@@ -1,12 +1,16 @@
 .DEFAULT_GOAL := help
-.PHONY: help install app calibrate run tune cameras login login-off test clean
+.PHONY: help install check app calibrate run tune cameras login login-off test clean
 
 help:  ## Show this help
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
 		| awk -F':.*?## ' '{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-install:  ## Create the venv and install everything
+install:  ## Install dependencies and set up the virtual camera for this OS
 	uv sync
+	@uv run konsent-setup
+
+check:  ## Report what is missing, without installing anything
+	@uv run konsent-setup --check
 
 app:  ## Launch the tray app (menu bar on macOS)
 	uv run konsent-app

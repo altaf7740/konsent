@@ -30,6 +30,7 @@ dependencies = [
 [project.scripts]
 konsent = "konsent.__main__:main"
 konsent-app = "konsent.app:main"
+konsent-setup = "konsent.doctor:main"
 
 [dependency-groups]
 dev = ["pytest>=8.0"]
