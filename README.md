@@ -26,6 +26,143 @@ One step it cannot do for you: on macOS, approving the camera extension in
 *System Settings → General → Login Items & Extensions → Camera Extensions*.
 macOS requires a human for that. `make check` tells you when it is pending.
 
+## Virtual camera setup
+
+konsent has to publish its blurred feed as a camera device that other apps can
+select. Every OS does that differently, and `make install` handles most of it —
+this section is what to do when it doesn't, and how to verify each step.
+
+`make check` reports the state of all of this at any time.
+
+<details open>
+<summary><b>macOS</b></summary>
+
+The driver is a **Core Media I/O system extension**, and konsent borrows the one
+OBS ships. That is deliberate: macOS refuses to load an unsigned camera
+extension, and signing your own needs a paid Apple Developer account. OBS's is
+already signed and notarised, so you get a system-wide camera for free.
+
+```bash
+brew install --cask obs          # or: make install
+open -a OBS                      # then click "Start Virtual Camera"
+```
+
+Clicking **Start Virtual Camera** once is what registers the extension with
+macOS. You then have to approve it — macOS blocks camera extensions from being
+enabled by software, so nothing can do this step for you:
+
+**System Settings → General → Login Items & Extensions → Camera Extensions → enable OBS**
+
+That row is easy to miss: it sits at the bottom of a long page, under a small
+*Extensions* heading. Typing `camera extensions` into the System Settings search
+box jumps straight to it.
+
+Verify:
+
+```bash
+systemextensionsctl list | grep obs
+#   ... [activated enabled]        <- ready
+#   ... [activated waiting for user]  <- still needs the toggle above
+
+system_profiler SPCameraDataType | grep "OBS Virtual Camera"
+```
+
+Once enabled, quit and reopen OBS. You do not need OBS running afterwards — only
+its extension. Some macOS versions want a reboot before the device appears.
+
+</details>
+
+<details open>
+<summary><b>Ubuntu / Linux</b></summary>
+
+The driver is **v4l2loopback**, a kernel module that creates a virtual
+`/dev/video*` device. It is a DKMS module, so it compiles against your running
+kernel and needs matching headers.
+
+```bash
+sudo apt install v4l2loopback-dkms linux-headers-$(uname -r)
+
+sudo modprobe v4l2loopback devices=1 video_nr=10 \
+     card_label=konsent exclusive_caps=1
+```
+
+Both options matter. **`exclusive_caps=1` is required** — without it Chrome and
+Firefox enumerate the device but refuse to use it, which looks like konsent is
+broken when it isn't. `card_label=konsent` is what the device is called in the
+camera picker; without it you get a generic "Dummy video device".
+
+Make it survive a reboot:
+
+```bash
+echo v4l2loopback | sudo tee /etc/modules-load.d/konsent.conf
+echo 'options v4l2loopback devices=1 video_nr=10 card_label=konsent exclusive_caps=1' \
+  | sudo tee /etc/modprobe.d/konsent.conf
+```
+
+Verify:
+
+```bash
+lsmod | grep v4l2loopback         # module loaded
+ls -l /dev/video10                # device exists
+v4l2-ctl --list-devices           # shows "konsent"  (sudo apt install v4l-utils)
+```
+
+Two things that bite on Linux:
+
+- **Secure Boot** rejects unsigned kernel modules. If `modprobe` fails with
+  *"Key was rejected by service"*, either enrol a MOK key for DKMS or disable
+  Secure Boot.
+- **Wayland** restricts global key capture, so the terminal hotkeys likely won't
+  fire. The tray menu does the same job. Check with `echo $XDG_SESSION_TYPE`.
+
+</details>
+
+<details open>
+<summary><b>Windows</b></summary>
+
+The driver is the **DirectShow filter** that OBS registers when it installs, so
+the setup is the same shape as macOS but without an approval step.
+
+```powershell
+winget install -e --id OBSProject.OBSStudio    # or: make install
+```
+
+Open OBS once and click **Start Virtual Camera** in the Controls panel to
+register the filter. OBS registers both 32- and 64-bit filters, so older apps
+that load the 32-bit one still see the device.
+
+Verify by opening the built-in **Camera** app and switching cameras — *OBS
+Virtual Camera* should be in the list. Or run `make cameras`.
+
+If the device never appears, run the OBS installer again and choose **Repair**;
+filter registration needs administrator rights and is skipped if the installer
+was run without them.
+
+</details>
+
+### Selecting it in your meeting app
+
+Start konsent (`make app` or `make run`), then pick the device:
+
+| App | Where |
+|---|---|
+| Google Meet | Settings (⚙) → Video → Camera |
+| Zoom | Settings → Video → Camera |
+| Teams | Settings → Devices → Camera |
+| Slack, Discord, FaceTime | Settings → Video / Camera |
+
+The device is called **OBS Virtual Camera** on macOS and Windows, and **konsent**
+on Linux (that's the `card_label`).
+
+Two habits worth knowing:
+
+- **Start konsent before the meeting app.** Browsers and Electron apps enumerate
+  cameras once at launch and cache the list. If the device isn't there yet, quit
+  the app fully — including background Teams and Slack — and reopen it.
+- **A frozen or black feed** usually means konsent stopped. Check the tray icon:
+  ◌ means it isn't running.
+
+
 ## Use
 
 Tray app — menu bar on macOS, system tray on Linux and Windows:
