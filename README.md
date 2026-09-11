@@ -57,6 +57,13 @@ That row is easy to miss: it sits at the bottom of a long page, under a small
 *Extensions* heading. Typing `camera extensions` into the System Settings search
 box jumps straight to it.
 
+Click the ⓘ next to **Camera Extensions**, switch **OBS** on, then click **Done**:
+
+<p>
+  <img src="docs/images/macos-camera-extensions-list.png" alt="Login Items &amp; Extensions, By Category view, with the Camera Extensions row listing the OBS camera extension" width="420">
+  <img src="docs/images/macos-camera-extension-obs.png" alt="Camera Extensions dialog with the OBS toggle switched on" width="340">
+</p>
+
 Verify:
 
 ```bash
