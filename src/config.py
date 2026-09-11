@@ -25,9 +25,9 @@ def user_config_path() -> Path:
 
 def default_config_path() -> Path:
     """Prefer a config.toml in the current directory (e.g. a project checkout)
-    over the OS-wide location, so `uv run konsent` picks up local edits without
-    needing --config."""
-    local = Path("config.toml")
+    over the OS-wide location, so `make run` and `make app` pick up local edits
+    without needing --config. Absolute, since the tray writes back to it later."""
+    local = Path.cwd() / "config.toml"
     return local if local.exists() else user_config_path()
 
 

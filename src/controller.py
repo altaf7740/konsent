@@ -8,7 +8,7 @@ import threading
 from pathlib import Path
 
 from .calibrate import calibrate
-from .config import Config, user_config_path
+from .config import Config, default_config_path
 from .focus import FocusTracker, Mode
 
 SETTINGS_TEMPLATE = """# konsent settings. Delete any line to fall back to the default.
@@ -38,7 +38,7 @@ class Controller:
     """Owns the capture thread and the state a tray icon renders."""
 
     def __init__(self, config_path: Path | None = None) -> None:
-        self.config_path = config_path or user_config_path()
+        self.config_path = config_path or default_config_path()
         self.cfg = Config.load(self.config_path)
         self.tracker = FocusTracker(self.cfg)
         self._lock = threading.Lock()
