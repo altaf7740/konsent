@@ -22,7 +22,7 @@ pitch_exit  = 26.0
 yaw_offset = 0.0
 pitch_offset = 0.0
 
-# Seconds the face may go missing before blurring (rides out detector dropouts).
+# Seconds you may look away, lean back or drop out of view before it blurs.
 grace_seconds = 0.4
 
 # --- look ---

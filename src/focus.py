@@ -6,6 +6,10 @@ from enum import Enum
 from .config import Config
 from .detector import FaceSignal
 
+# Head-pose estimates jitter by a few degrees frame to frame; this averages
+# them over roughly this many seconds before comparing against thresholds.
+_SMOOTHING_SECONDS = 0.2
+
 
 class Mode(Enum):
     AUTO = "auto"
@@ -21,7 +25,8 @@ class FocusTracker:
         self.mode = Mode.AUTO
         self.engaged = False
         self.level = 0.0  # 0 = fully blurred, 1 = fully clear
-        self._missing_for = 0.0
+        self.smoothed: FaceSignal | None = None
+        self._failing_for = 0.0
 
     def angles(self, sig: FaceSignal) -> tuple[float, float]:
         """Head rotation relative to the calibrated neutral pose."""
@@ -29,6 +34,17 @@ class FocusTracker:
             abs(sig.yaw - self.cfg.yaw_offset),
             abs(sig.pitch - self.cfg.pitch_offset),
         )
+
+    def _smooth(self, sig: FaceSignal, dt: float) -> FaceSignal:
+        s = self.smoothed
+        if s is None:
+            self.smoothed = FaceSignal(True, sig.face_ratio, sig.yaw, sig.pitch)
+            return self.smoothed
+        a = min(1.0, dt / _SMOOTHING_SECONDS)
+        s.face_ratio += a * (sig.face_ratio - s.face_ratio)
+        s.yaw += a * (sig.yaw - s.yaw)
+        s.pitch += a * (sig.pitch - s.pitch)
+        return s
 
     def _passes(self, sig: FaceSignal) -> bool:
         c = self.cfg
@@ -51,13 +67,18 @@ class FocusTracker:
         elif self.mode is Mode.FORCE_BLUR:
             target = 0.0
         else:
-            if sig.found:
-                self._missing_for = 0.0
-                self.engaged = self._passes(sig)
+            passes = sig.found and self._passes(self._smooth(sig, dt))
+            if passes:
+                self._failing_for = 0.0
+                self.engaged = True
             else:
-                self._missing_for += dt
-                if self._missing_for >= self.cfg.grace_seconds:
+                # Clear instantly, but blur only once the reason has lasted
+                # grace_seconds, so glances and neck shifts don't trigger it.
+                self._failing_for += dt
+                if self._failing_for >= self.cfg.grace_seconds:
                     self.engaged = False
+                    if not sig.found:
+                        self.smoothed = None
             target = 1.0 if self.engaged else 0.0
 
         step = dt / max(self.cfg.fade_seconds, 1e-3)

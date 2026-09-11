@@ -76,6 +76,24 @@ def test_brief_detector_dropout_does_not_blur():
     assert t.engaged
 
 
+def test_brief_glance_away_does_not_blur():
+    cfg = Config()
+    t = FocusTracker(cfg)
+    settle(t, facing(0.40))
+    glance = FaceSignal(found=True, face_ratio=0.40, yaw=cfg.yaw_exit + 20, pitch=0.0)
+    settle(t, glance, seconds=cfg.grace_seconds / 2)
+    assert t.engaged
+
+
+def test_single_noisy_frame_does_not_blur():
+    cfg = Config()
+    t = FocusTracker(cfg)
+    settle(t, facing(0.40))
+    t.update(FaceSignal(found=True, face_ratio=0.40, yaw=cfg.yaw_exit + 20, pitch=0.0), 1 / 30)
+    settle(t, facing(0.40), seconds=cfg.grace_seconds)
+    assert t.level == pytest.approx(1.0)
+
+
 def test_sustained_absence_blurs():
     cfg = Config()
     t = FocusTracker(cfg)

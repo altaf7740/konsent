@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from .calibrate import calibrate
-from .config import Config, user_config_path
+from .config import Config, default_config_path
 from .pipeline import list_cameras, run
 
 
@@ -39,7 +39,7 @@ def main(argv: list[str] | None = None) -> int:
         print("cameras:", ", ".join(map(str, found)) if found else "none found")
         return 0
 
-    config_path = args.config or user_config_path()
+    config_path = args.config or default_config_path()
     cfg = Config.load(config_path)
     for name, value in (
         ("camera_index", args.camera),

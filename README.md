@@ -227,8 +227,10 @@ webcam → capture → MediaPipe landmarks → focus decision → blur → virtu
 ```
 
 Two thresholds, not one: becoming clear needs a larger, straighter-on face than
-staying clear does, so hovering at the boundary doesn't flicker. A grace period
-rides out dropped detections, and transitions crossfade.
+staying clear does, so hovering at the boundary doesn't flicker. Head pose is
+smoothed over a few frames, and a grace period means it only blurs once you've
+looked away (or dropped out of view) for a moment — not on a glance or a neck
+shift. Transitions crossfade.
 
 ```
 src/                 # installs as the `konsent` package

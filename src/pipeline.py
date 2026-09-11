@@ -57,10 +57,11 @@ def _draw_hud(
 ) -> None:
     c = tracker.cfg
     enter = not tracker.engaged
-    yaw, pitch = tracker.angles(sig)
+    shown = tracker.smoothed if sig.found and tracker.smoothed else sig
+    yaw, pitch = tracker.angles(shown)
     rows = [
         f"mode {tracker.mode.value}   clarity {tracker.level:0.2f}   {fps:4.1f} fps",
-        f"face  {sig.face_ratio:0.3f} / {c.face_ratio_enter if enter else c.face_ratio_exit:0.3f}"
+        f"face  {shown.face_ratio:0.3f} / {c.face_ratio_enter if enter else c.face_ratio_exit:0.3f}"
         if sig.found
         else "face  none",
         f"yaw   {yaw:5.1f} / {c.yaw_enter if enter else c.yaw_exit:0.1f}",

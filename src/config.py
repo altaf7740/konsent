@@ -23,6 +23,14 @@ def user_config_path() -> Path:
     return base / "konsent" / "config.toml"
 
 
+def default_config_path() -> Path:
+    """Prefer a config.toml in the current directory (e.g. a project checkout)
+    over the OS-wide location, so `uv run konsent` picks up local edits without
+    needing --config."""
+    local = Path("config.toml")
+    return local if local.exists() else user_config_path()
+
+
 @dataclass
 class Config:
     # --- capture ---
@@ -46,7 +54,7 @@ class Config:
     yaw_exit: float = 26.0
     pitch_enter: float = 16.0
     pitch_exit: float = 26.0
-    # How long a face may go missing before we blur (covers detector dropouts).
+    # How long you may look away, lean back or drop out of view before we blur.
     grace_seconds: float = 0.4
 
     # --- look ---
