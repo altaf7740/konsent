@@ -29,6 +29,11 @@ grace_seconds = 0.4
 fade_seconds = 0.35    # crossfade time between blurred and clear
 blur_strength = 0.06   # max blur radius as a fraction of frame width
 
+# --- privacy ---
+# Mute the system microphone while the picture is fully blurred, and unmute it
+# as soon as it starts clearing. Not available on Windows.
+mute_mic = true
+
 # --- overrides ---
 hotkey_clear = "<ctrl>+<alt>+c"
 hotkey_blur  = "<ctrl>+<alt>+b"

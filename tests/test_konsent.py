@@ -1,3 +1,4 @@
+import sys
 import time
 from pathlib import Path
 
@@ -327,6 +328,83 @@ def test_controller_hands_back_an_error_only_once():
     c.error = "no camera"
     assert c.take_error() == "no camera"
     assert c.take_error() is None
+
+
+# --- microphone -------------------------------------------------------------
+
+@pytest.fixture
+def mic_calls(monkeypatch):
+    """A MicMuter whose shell commands are recorded instead of run."""
+    from konsent import mic as mic_module
+
+    calls = []
+
+    def fake_run(args):
+        calls.append(args)
+        return "42"  # what macOS answers when asked for the input volume
+
+    monkeypatch.setattr(mic_module, "_run", fake_run)
+    return calls
+
+
+def test_mic_mutes_once_and_unmutes_once(mic_calls):
+    from konsent.mic import MicMuter
+
+    m = MicMuter()
+    if not m.enabled:
+        pytest.skip("muting is unsupported here")
+    m.set_muted(True)
+    m.set_muted(True)  # every frame while blurred
+    assert m.muted and len(mic_calls) <= 2  # macOS reads the volume first
+    before = len(mic_calls)
+    m.set_muted(False)
+    m.set_muted(False)
+    assert not m.muted and len(mic_calls) == before + 1
+
+
+def test_mic_restores_the_volume_it_found(mic_calls):
+    from konsent.mic import MicMuter
+
+    m = MicMuter()
+    if sys.platform != "darwin":
+        pytest.skip("only macOS mutes by moving the input volume")
+    m.set_muted(True)
+    m.set_muted(False)
+    assert "set volume input volume 42" in mic_calls[-1][-1]
+
+
+def test_mic_closing_hands_the_microphone_back(mic_calls):
+    from konsent.mic import MicMuter
+
+    m = MicMuter()
+    if not m.enabled:
+        pytest.skip("muting is unsupported here")
+    with m:
+        m.set_muted(True)
+    assert not m.muted
+
+
+def test_a_failing_mic_disables_itself_and_never_raises(monkeypatch):
+    """Losing the microphone must not take the video down with it."""
+    from konsent import mic as mic_module
+
+    def boom(args):
+        raise OSError("pactl: not found")
+
+    monkeypatch.setattr(mic_module, "_run", boom)
+    m = mic_module.MicMuter()
+    m.set_muted(True)
+    assert not m.enabled and not m.muted and m.error
+    m.set_muted(True)  # subsequent frames stay quiet
+    m.close()
+
+
+def test_mic_muting_can_be_switched_off(mic_calls):
+    from konsent.mic import MicMuter
+
+    m = MicMuter(enabled=False)
+    m.set_muted(True)
+    assert not m.muted and mic_calls == []
 
 
 # --- setup doctor -----------------------------------------------------------
