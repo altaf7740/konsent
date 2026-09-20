@@ -61,6 +61,10 @@ class Config:
     fade_seconds: float = 0.35
     blur_strength: float = 0.06  # max blur sigma as a fraction of frame width
 
+    # --- privacy ---
+    # Mute the system microphone for as long as the picture is fully blurred.
+    mute_mic: bool = True
+
     # --- override hotkeys (pynput syntax) ---
     hotkey_clear: str = "<ctrl>+<alt>+c"
     hotkey_blur: str = "<ctrl>+<alt>+b"

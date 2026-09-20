@@ -10,6 +10,7 @@ from pathlib import Path
 from .calibrate import calibrate
 from .config import Config, default_config_path
 from .focus import FocusTracker, Mode
+from .mic import MicMuter
 
 SETTINGS_TEMPLATE = """# konsent settings. Delete any line to fall back to the default.
 face_ratio_enter = 0.30
@@ -21,6 +22,7 @@ pitch_exit  = 26.0
 grace_seconds = 0.4
 fade_seconds = 0.35
 blur_strength = 0.06
+mute_mic = true
 """
 
 
@@ -41,6 +43,7 @@ class Controller:
         self.config_path = config_path or default_config_path()
         self.cfg = Config.load(self.config_path)
         self.tracker = FocusTracker(self.cfg)
+        self.mic = MicMuter(self.cfg.mute_mic)
         self._lock = threading.Lock()
         self._stop: threading.Event | None = None
         self._thread: threading.Thread | None = None
@@ -71,7 +74,11 @@ class Controller:
             if not self.running:
                 return "Stopped"
             face = "face detected" if self.found else "no face"
-            return f"{'Clear' if self.engaged else 'Blurred'} — {face}, {self.fps:.0f} fps"
+            mic = ", mic muted" if self.mic.muted else ""
+            return (
+                f"{'Clear' if self.engaged else 'Blurred'} — "
+                f"{face}, {self.fps:.0f} fps{mic}"
+            )
 
     def take_error(self) -> str | None:
         with self._lock:
@@ -97,6 +104,7 @@ class Controller:
                 on_tick=self._record,
                 quiet=True,
                 hotkeys=False,  # the tray menu provides the overrides
+                mic=self.mic,
             )
         except Exception as exc:
             with self._lock:
@@ -112,6 +120,7 @@ class Controller:
         self.cfg = Config.load(self.config_path)
         self.tracker = FocusTracker(self.cfg)
         self.tracker.mode = mode
+        self.mic = MicMuter(self.cfg.mute_mic)
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._worker, daemon=True)
         with self._lock:

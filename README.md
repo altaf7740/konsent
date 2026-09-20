@@ -3,7 +3,8 @@
 A virtual camera that keeps you **blurred until you lean in and look at it**.
 
 Point Google Meet, Zoom, or Teams at `konsent` instead of your webcam. Face close
-and facing the lens → sharp. Sit back, turn away, or leave → heavy blur.
+and facing the lens → sharp. Sit back, turn away, or leave → heavy blur, and your
+microphone mutes with it.
 
 Works on macOS, Linux and Windows — though only macOS has been tested on real
 hardware. See [Platform support](#platform-support).
@@ -224,12 +225,14 @@ edit `config.toml` (copy `config.toml.example`).
 | Blurs when you glance at notes | Raise `yaw_exit` / `pitch_exit` |
 | Transition feels abrupt | Raise `fade_seconds` |
 | Not blurred enough | Raise `blur_strength` |
+| Don't want the mic touched | Set `mute_mic = false` |
 
 ## How it works
 
 ```
 webcam → capture → MediaPipe landmarks → focus decision → blur → virtual camera → Meet
-                                               │
+                                               │   │
+                                               │   └→ system microphone mute
                           face size + head pose + hysteresis + hotkey override
 ```
 
@@ -239,11 +242,21 @@ smoothed over a few frames, and a grace period means it only blurs once you've
 looked away (or dropped out of view) for a moment — not on a glance or a neck
 shift. Transitions crossfade.
 
+The microphone follows the same decision, without the crossfade: it mutes once
+the picture is *fully* blurred and unmutes the moment it starts clearing, so
+audio leads the video rather than trailing it. konsent always restores the
+volume it found — on quit, on stop, and even if muting later fails. macOS has no
+input mute switch, so it moves the system input volume to 0 and back; Linux uses
+`pactl` on the default source. Windows ships no equivalent CLI, so there the
+feature reports itself unavailable and the video is unaffected. Turn it off with
+`mute_mic = false`.
+
 ```
 src/                 # installs as the `konsent` package
 ├── detector.py   landmarks → face size + head pose
 ├── focus.py      hysteresis state machine → 0..1 clarity
 ├── effects.py    downscaled Gaussian defocus
+├── mic.py        mutes the system microphone while blurred
 ├── calibrate.py  measures your neutral pose
 ├── pipeline.py   capture → detect → obscure → publish
 ├── controller.py capture thread + state, shared by every front end
@@ -271,11 +284,15 @@ Everything is written cross-platform, but only macOS has been run end to end.
 | Virtual camera | tested | untested | untested |
 | Tray app | tested | untested | untested |
 | Start at login | tested | untested | untested |
+| Microphone mute | tested | untested³ | unsupported⁴ |
 | Global hotkeys | disabled¹ | untested² | untested |
 
 ¹ pynput's macOS backend calls Text Input Source APIs off the main queue, which
 trips a dispatch assertion under an AppKit run loop. The tray menu replaces them.
 ² Likely needs X11; Wayland restricts global key capture.
+³ Via `pactl`, so it needs PulseAudio or PipeWire.
+⁴ No built-in CLI for the capture device; konsent says so at startup and leaves
+the microphone alone.
 
 "Portable" means written for it with no known blocker — not verified. macOS alone
 produced three surprises (a MediaPipe Metal crash, `CAP_AVFOUNDATION` opening the

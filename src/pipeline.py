@@ -15,6 +15,7 @@ from .config import Config
 from .detector import FaceDetector, FaceSignal
 from .effects import obscure
 from .focus import FocusTracker, Mode
+from .mic import MicMuter
 from .sinks import FrameSink, PreviewSink, VirtualCameraSink
 
 # macOS is deliberately absent: asking for CAP_AVFOUNDATION by index opens the
@@ -83,9 +84,10 @@ def run(
     on_tick: "Callable[[FocusTracker, FaceSignal, float], None] | None" = None,
     quiet: bool = False,
     hotkeys: bool = True,
+    mic: "MicMuter | None" = None,
 ) -> int:
-    """Run until stopped. `tracker`, `stop_event` and `on_tick` let a GUI drive
-    and observe the loop; the CLI leaves them unset."""
+    """Run until stopped. `tracker`, `stop_event`, `on_tick` and `mic` let a GUI
+    drive and observe the loop; the CLI leaves them unset."""
     cap = open_camera(cfg)
     ok, frame = cap.read()
     if not ok:
@@ -103,8 +105,9 @@ def run(
     sink: FrameSink = (
         PreviewSink() if preview else VirtualCameraSink(width, height, cfg.fps)
     )
+    mic = mic or MicMuter(cfg.mute_mic)
     if not quiet:
-        print(f"[konsent] {width}x{height} -> {sink.name}")
+        print(f"[konsent] {width}x{height} -> {sink.name}, {mic.name}")
         print(
             f"[konsent] hold {cfg.hotkey_clear} for clear, {cfg.hotkey_blur} for blur"
             if listener
@@ -114,7 +117,7 @@ def run(
     prev = time.monotonic()
     smoothed_fps = float(cfg.fps)
     try:
-        with sink:
+        with sink, mic:
             while not (stop_event is not None and stop_event.is_set()):
                 ok, frame = cap.read()
                 if not ok:
@@ -134,6 +137,10 @@ def run(
                 out = obscure(frame, 1.0 - level, cfg.blur_strength)
                 if hud:
                     _draw_hud(out, signal, tracker, smoothed_fps)
+
+                # Mute once fully blurred, unmute the instant the fade back
+                # to clear begins — so the mic leads the picture, never trails.
+                mic.set_muted(level <= 0.0)
 
                 sink.send(out)
                 if on_tick is not None:
